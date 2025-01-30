@@ -11,6 +11,8 @@ from unstructured.cleaners.core import (
 from unstructured.partition.html import partition_html
 from unstructured.staging.huggingface import chunk_by_attention_window
 
+from streaming_pipeline.embeddings import EmbeddingModelSingleton
+
 
 class NewsArticle(BaseModel):
     """

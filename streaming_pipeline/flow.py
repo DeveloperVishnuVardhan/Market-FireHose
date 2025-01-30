@@ -6,10 +6,10 @@ from pydantic import parse_obj_as
 import bytewax.operators as op
 from bytewax.dataflow import Dataflow
 from bytewax.testing import TestingSource
-from bytewax.inputs import Input
+from bytewax.inputs import Source
 
 from streaming_pipeline import mocked
-from streaming_pipeline import NewsArticle
+from streaming_pipeline.models import NewsArticle
 
 
 def build(
@@ -40,8 +40,18 @@ def build(
             is_batch, from_datetime, to_datetime, is_input_mocked=is_input_mocked
         )
     )
-    stream = op.flat_map(lambda messages: parse_obj_as(
-        List[NewsArticle], messages))
+
+    # Add step_id to flat_map and return the stream
+    stream = op.flat_map(
+        "parse_messages",  # step_id is required
+        stream,
+        lambda messages: parse_obj_as(List[NewsArticle], messages)
+    )
+
+    if debug:
+        stream = op.inspect("debug_output", stream)
+
+    return flow  # Return the flow
 
 
 def _build_input(
@@ -49,7 +59,7 @@ def _build_input(
         from_datetime: Optional[datetime.datetime] = None,
         to_datetime: Optional[datetime.datetime] = None,
         is_input_mocked: bool = False,
-) -> Input:
+) -> Source:
     if is_input_mocked is True:
         return TestingSource(mocked.financial_news)
     if is_batch:
@@ -57,6 +67,7 @@ def _build_input(
             from_datetime is not None and to_datetime is not None
         ), "from_datetime and to_datetime must be provided when is_batch is True"
         # To be implemented.
+        return TestingSource([])
     else:
         # To be implemented.
-        return None
+        return TestingSource([])
